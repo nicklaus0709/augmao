@@ -1,0 +1,81 @@
+{
+  "name": "JobRun",
+  "type": "object",
+  "properties": {
+    "job": {
+      "type": "string"
+    },
+    "trigger": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "RUNNING",
+        "OK",
+        "ERROR"
+      ],
+      "default": "RUNNING"
+    },
+    "started_at": {
+      "type": "string"
+    },
+    "finished_at": {
+      "type": "string"
+    },
+    "duration_ms": {
+      "type": "number"
+    },
+    "generated": {
+      "type": "number"
+    },
+    "codes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "error": {
+      "type": "string"
+    },
+    "request_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "job",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$and": [
+        {
+          "$nor": [
+            {
+              "user_condition": {
+                "data.active": false
+              }
+            }
+          ]
+        },
+        {
+          "$or": [
+            {
+              "user_condition": {
+                "data.app_role": "ADMIN"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "create": false,
+    "update": false,
+    "delete": false
+  }
+}

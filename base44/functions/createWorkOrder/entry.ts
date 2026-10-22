@@ -1,45 +1,60 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
-import { requireUser, errorResponse, reserveWorkOrderCode, resolveUserName } from '../../shared/guards.ts';
+import {
+  defineFunction, getRecord, reserveWorkOrderCode, assertAssignable, audit, displayName,
+  text, number, dateTime, oneOf, id, ROLE_RANK, rankOf, deny,
+} from '../../shared/guards.ts';
 
 const TYPES = ['CORRECTIVE', 'PREVENTIVE', 'PREDICTIVE', 'INSPECTION'];
 const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
 
-export default async function (req) {
-  try {
-    const base44 = createClientFromRequest(req);
-    const { user, denied } = await requireUser(base44, 2);
-    if (denied) return denied;
+export default defineFunction('createWorkOrder', async (ctx) => {
+  const denied = await ctx.requireUser(ROLE_RANK.TECHNICIAN);
+  if (denied) return denied;
 
-    const body = await req.json().catch(() => ({}));
-    const title = String(body.title || '').trim();
-    if (!title) return errorResponse('El título es obligatorio');
-    if (!body.asset_id) return errorResponse('El activo es obligatorio');
+  const body = ctx.body;
+  const title = text(body.title, 'El título', { max: 150, required: true });
+  const assetId = id(body.asset_id, 'El activo');
+  const description = text(body.description, 'La descripción', { max: 5000 });
+  const type = oneOf(body.type, TYPES, 'El tipo', 'CORRECTIVE');
+  const priority = oneOf(body.priority, PRIORITIES, 'La prioridad', 'MEDIUM');
+  const estimated = number(body.estimated_minutes, 'El tiempo estimado', { min: 1, max: 100000 });
+  const scheduledAt = dateTime(body.scheduled_at, 'La fecha programada');
 
-    const type = TYPES.includes(body.type) ? body.type : 'CORRECTIVE';
-    const priority = PRIORITIES.includes(body.priority) ? body.priority : 'MEDIUM';
-    const estimated = body.estimated_minutes === '' || body.estimated_minutes === null || body.estimated_minutes === undefined
-      ? null
-      : Number(body.estimated_minutes);
+  const asset = await getRecord(ctx.db, 'Asset', assetId);
+  if (!asset) return Response.json({ error: 'El activo no existe' }, { status: 400 });
 
-    const code = await reserveWorkOrderCode(base44);
-    const assignedName = body.assigned_to_id ? await resolveUserName(base44, body.assigned_to_id) : null;
-
-    const workOrder = await base44.entities.WorkOrder.create({
-      code,
-      title,
-      type,
-      priority,
-      status: body.assigned_to_id ? 'ASSIGNED' : 'OPEN',
-      description: body.description || '',
-      asset_id: body.asset_id,
-      assigned_to_id: body.assigned_to_id || null,
-      assigned_to_name: assignedName || null,
-      scheduled_at: body.scheduled_at || null,
-      estimated_minutes: estimated,
-    });
-
-    return Response.json({ workOrder });
-  } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+  // Asignar al crear es decisión de un jefe; un técnico solo puede tomarla él mismo.
+  let assignee = null;
+  if (body.assigned_to_id) {
+    if (rankOf(ctx.user) < ROLE_RANK.SUPERVISOR && body.assigned_to_id !== ctx.user.id) {
+      return deny(ctx, 'Técnico asignando a otro usuario', 'Solo un jefe de área puede asignar a otro técnico');
+    }
+    assignee = await assertAssignable(ctx.base44, body.assigned_to_id);
   }
-}
+
+  const code = await reserveWorkOrderCode(ctx.db);
+  const workOrder = await ctx.db.WorkOrder.create({
+    code,
+    title,
+    type,
+    priority,
+    status: assignee ? 'ASSIGNED' : 'OPEN',
+    description,
+    asset_id: asset.id,
+    assigned_to_id: assignee ? assignee.id : null,
+    assigned_to_name: assignee ? displayName(assignee) : null,
+    scheduled_at: scheduledAt,
+    estimated_minutes: estimated,
+    created_by_id: ctx.user.id,
+    created_by_name: displayName(ctx.user),
+  });
+
+  ctx.fields.work_order = workOrder.code;
+  await audit(ctx, {
+    action: 'workorder.create',
+    entity: 'WorkOrder',
+    entityId: workOrder.id,
+    summary: workOrder.code + ' creada sobre ' + asset.code + (assignee ? ', asignada a ' + displayName(assignee) : ''),
+  });
+
+  return Response.json({ workOrder });
+});
