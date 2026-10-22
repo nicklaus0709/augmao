@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Loader2, Paperclip } from "lucide-react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { base44 } from "@/api/base44Client";
+import { callFunction } from "@/api/data";
 import { MAX_FILE_SIZE, MOVEMENT_KIND, RECEIPT_TYPES } from "@/lib/constants";
 
 export default function AttachReceiptModal({ open, onOpenChange, movement, onSaved }) {
@@ -28,18 +29,24 @@ export default function AttachReceiptModal({ open, onOpenChange, movement, onSav
     setSaving(true);
     try {
       const { file_uri } = await base44.integrations.Core.UploadPrivateFile({ file });
-      await base44.entities.StockMovementAttachment.create({
-        movement_id: movement.id,
-        kind,
-        file_name: file.name,
-        file_uri,
-        file_type: file.type,
-        size_bytes: file.size,
-      });
+      await callFunction(
+        "attachments",
+        {
+          action: "create",
+          target: "movement",
+          record_id: movement.id,
+          kind,
+          file_name: file.name,
+          file_uri,
+          file_type: file.type,
+          size_bytes: file.size,
+        },
+        "No se pudo subir el archivo"
+      );
       onOpenChange(false);
       onSaved();
     } catch (e) {
-      setError("No se pudo subir el archivo");
+      setError(e.message || "No se pudo subir el archivo");
     } finally {
       setSaving(false);
     }

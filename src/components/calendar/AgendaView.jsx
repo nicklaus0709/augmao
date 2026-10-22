@@ -4,7 +4,7 @@ import { AlertTriangle, SearchX } from "lucide-react";
 import { StatusBadge, PriorityBadge, TypeBadge } from "@/components/common/Badges";
 import EmptyState from "@/components/common/EmptyState";
 import { cn } from "@/lib/utils";
-import { addDays, isToday, startOfDay, formatTime, formatLongDate } from "@/lib/format";
+import { isToday, startOfDay, formatTime, formatLongDate } from "@/lib/format";
 
 export default function AgendaView({ events }) {
   const navigate = useNavigate();

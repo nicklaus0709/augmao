@@ -3,7 +3,8 @@ import { Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { base44 } from "@/api/base44Client";
 import { WO_PRIORITY, WO_TYPE, options } from "@/lib/constants";
-import { activeTechnicians } from "@/lib/permissions";
+import { activeTechnicians, can } from "@/lib/permissions";
+import { useAuth } from "@/lib/AuthContext";
 
 const EMPTY = {
   title: "",
@@ -20,7 +21,11 @@ export default function NewWorkOrderModal({ open, onOpenChange, assets, users, o
   const [form, setForm] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const technicians = activeTechnicians(users);
+  const { user } = useAuth();
+  // Asignar a otro técnico es decisión de un jefe; un técnico solo puede tomarla él mismo.
+  const technicians = activeTechnicians(users).filter(
+    (member) => can.assignTechnician(user) || member.id === user?.id
+  );
 
   const set = (key) => (event) => setForm((prev) => ({ ...prev, [key]: event.target.value }));
 

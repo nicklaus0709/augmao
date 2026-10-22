@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Send, MessageSquare, Trash2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { callFunction } from "@/api/data";
 import { formatDateTime } from "@/lib/format";
 import { can } from "@/lib/permissions";
 import { Spinner } from "@/components/common/EmptyState";
@@ -10,6 +11,7 @@ export default function CommentsPanel({ workOrderId, user, onCountChange }) {
   const [loading, setLoading] = useState(true);
   const [content, setContent] = useState("");
   const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -35,26 +37,29 @@ export default function CommentsPanel({ workOrderId, user, onCountChange }) {
     const text = content.trim();
     if (!text || text.length > 2000) return;
     setSending(true);
+    setError("");
     try {
-      await base44.entities.WorkOrderComment.create({
-        work_order_id: workOrderId,
-        user_id: user?.id || null,
-        user_name: user?.full_name || user?.email || "Usuario",
-        content: text,
-      });
+      await callFunction("workOrderComments", { action: "add", work_order_id: workOrderId, content: text }, "No se pudo enviar el comentario");
       setContent("");
       await load();
+    } catch (e) {
+      setError(e.message);
     } finally {
       setSending(false);
     }
   };
 
   const remove = async (comment) => {
-    await base44.entities.WorkOrderComment.delete(comment.id);
-    await load();
+    setError("");
+    try {
+      await callFunction("workOrderComments", { action: "delete", comment_id: comment.id }, "No se pudo borrar el comentario");
+      await load();
+    } catch (e) {
+      setError(e.message);
+    }
   };
 
-  const canDelete = can.deleteAttachments(user);
+  const canDelete = (comment) => can.deleteAttachments(user) || (comment.user_id && comment.user_id === user?.id);
 
   return (
     <section className="card-surface p-5">
@@ -83,7 +88,7 @@ export default function CommentsPanel({ workOrderId, user, onCountChange }) {
                 </p>
                 <p className="mt-1 whitespace-pre-wrap break-words text-sm text-navy/90">{comment.content}</p>
               </div>
-              {canDelete && (
+              {canDelete(comment) && (
                 <button
                   type="button"
                   className="btn-icon h-8 w-8 text-red-500 hover:bg-red-50"
@@ -97,6 +102,8 @@ export default function CommentsPanel({ workOrderId, user, onCountChange }) {
           ))}
         </ul>
       )}
+
+      {error && <p className="mt-4 rounded-xl bg-red-50 px-3 py-2 text-xs text-red-700">{error}</p>}
 
       <form onSubmit={send} className="mt-5 flex items-center gap-2">
         <input

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, ChevronLeft, ChevronRight, CalendarDays, Columns3, List } from "lucide-react";
-import { base44 } from "@/api/base44Client";
+import { fetchAll } from "@/api/data";
 import PageHeader from "@/components/common/PageHeader";
 import { LoadingBlock } from "@/components/common/EmptyState";
 import CalendarLegend from "@/components/calendar/CalendarLegend";
@@ -64,8 +64,8 @@ export default function WorkOrderCalendar() {
     else setLoading(true);
     try {
       const [woResult, assetResult] = await Promise.all([
-        base44.entities.WorkOrder.filter({}, { sort: "scheduled_at", limit: 1000 }),
-        base44.entities.Asset.filter({}, { sort: "code", limit: 500 }),
+        fetchAll("WorkOrder", {}, { sort: "scheduled_at" }),
+        fetchAll("Asset", {}, { sort: "code" }),
       ]);
       setWorkOrders((woResult.items || []).filter((wo) => wo.scheduled_at));
       setAssets(assetResult.items || []);

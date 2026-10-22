@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { CheckCircle2, Calendar, AlertTriangle, Plus, Play, Pause, Loader2 } from "lucide-react";
-import { base44 } from "@/api/base44Client";
+import { callFunction, fetchAll } from "@/api/data";
 import { useAuth } from "@/lib/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
 import useReferenceData from "@/hooks/useReferenceData";
@@ -11,7 +11,6 @@ import NewPlanModal from "@/components/maintenance/NewPlanModal";
 import { frequencyText } from "@/lib/constants";
 import { can } from "@/lib/permissions";
 import { formatDate, formatMinutes } from "@/lib/format";
-import { cn } from "@/lib/utils";
 
 const DAY = 86400000;
 
@@ -31,8 +30,8 @@ export default function Maintenance() {
     setLoading(true);
     try {
       const [plansResult, woResult] = await Promise.all([
-        base44.entities.MaintenancePlan.filter({}, { sort: "next_run_at", limit: 300 }),
-        base44.entities.WorkOrder.filter({}, { sort: "-created_date", limit: 500 }),
+        fetchAll("MaintenancePlan", {}, { sort: "next_run_at" }),
+        fetchAll("WorkOrder", {}, { sort: "-created_date" }),
       ]);
       setPlans(plansResult.items || []);
       setWorkOrders(woResult.items || []);
@@ -88,23 +87,23 @@ export default function Maintenance() {
   const runNow = async (plan) => {
     setBusyId(plan.id);
     try {
-      const response = await base44.functions.invoke("runMaintenancePlan", { plan_id: plan.id });
-      if (response.data?.error) {
-        toast({ title: response.data.error, variant: "destructive" });
-        return;
-      }
-      toast({ title: "Orden generada", description: response.data.workOrder?.code });
+      const data = await callFunction("runMaintenancePlan", { plan_id: plan.id }, "No se pudo ejecutar el plan");
+      toast({ title: "Orden generada", description: data.workOrder?.code });
       await load();
     } catch (e) {
-      toast({ title: e.response?.data?.error || "No se pudo ejecutar el plan", variant: "destructive" });
+      toast({ title: e.message, variant: "destructive" });
     } finally {
       setBusyId(null);
     }
   };
 
   const togglePlan = async (plan) => {
-    await base44.entities.MaintenancePlan.update(plan.id, { active: plan.active === false });
-    await load();
+    try {
+      await callFunction("manageCatalog", { entity: "MaintenancePlan", action: "set_active", id: plan.id, active: plan.active === false });
+      await load();
+    } catch (e) {
+      toast({ title: e.message, variant: "destructive" });
+    }
   };
 
   const badgeFor = (plan) => {

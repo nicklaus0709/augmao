@@ -5,7 +5,7 @@ import { base44 } from "@/api/base44Client";
 import { ROLES } from "@/lib/constants";
 
 export default function UserFormModal({ open, onOpenChange, member, onSaved }) {
-  const [form, setForm] = useState({ full_name: "", email: "", app_role: "TECHNICIAN", phone: "" });
+  const [form, setForm] = useState({ full_name: "", email: "", app_role: "VIEWER", phone: "" });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -17,10 +17,10 @@ export default function UserFormModal({ open, onOpenChange, member, onSaved }) {
         ? {
             full_name: member.full_name || "",
             email: member.email || "",
-            app_role: member.app_role || "TECHNICIAN",
+            app_role: member.app_role || "VIEWER",
             phone: member.phone || "",
           }
-        : { full_name: "", email: "", app_role: "TECHNICIAN", phone: "" }
+        : { full_name: "", email: "", app_role: "VIEWER", phone: "" }
     );
   }, [open, member]);
 

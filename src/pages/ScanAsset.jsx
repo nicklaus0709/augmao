@@ -4,13 +4,14 @@ import {
   ArrowLeft, RefreshCw, ScanLine, MapPin, Package, MessageSquare, Paperclip, SearchX, AlertTriangle,
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { fetchAll } from "@/api/data";
 import { useAuth } from "@/lib/AuthContext";
 import { LoadingBlock } from "@/components/common/EmptyState";
 import { StatusBadge, PriorityBadge, AssetStatusBadge, TypeBadge, unitLabel } from "@/components/common/Badges";
 import AttachmentPanel from "@/components/common/AttachmentPanel";
 import { can } from "@/lib/permissions";
 import { frequencyText } from "@/lib/constants";
-import { formatClock, formatDate, formatDateTime, formatMinutes } from "@/lib/format";
+import { formatClock, formatDate, formatMinutes } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 const REFRESH_MS = 10000;
@@ -50,10 +51,10 @@ export default function ScanAsset() {
         setAsset(record);
 
         const [woResult, plansResult, sparesResult, childrenResult, parentRecord] = await Promise.all([
-          base44.entities.WorkOrder.filter({ asset_id: record.id }, { sort: "-created_date", limit: 200 }),
+          fetchAll("WorkOrder", { asset_id: record.id }, { sort: "-created_date" }),
           base44.entities.MaintenancePlan.filter({ asset_id: record.id, active: true }, { limit: 100 }),
-          base44.entities.SparePart.filter({}, { sort: "code", limit: 500 }),
-          base44.entities.Asset.filter({ parent_id: record.id }, { sort: "code", limit: 100 }),
+          fetchAll("SparePart", {}, { sort: "code" }),
+          fetchAll("Asset", { parent_id: record.id }, { sort: "code" }),
           record.parent_id ? base44.entities.Asset.get(record.parent_id).catch(() => null) : Promise.resolve(null),
         ]);
 

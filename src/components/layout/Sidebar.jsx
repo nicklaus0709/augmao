@@ -2,14 +2,14 @@ import React from "react";
 import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard, ClipboardList, ScanLine, Package2, Boxes, Calendar,
-  BarChart3, Users, LogOut, User, X,
+  BarChart3, Users, Activity, LogOut, User, X,
 } from "lucide-react";
 import Logo from "@/components/layout/Logo";
 import { visibleNav, resolveRole } from "@/lib/permissions";
 import { ROLES } from "@/lib/constants";
 
 const ICONS = {
-  LayoutDashboard, ClipboardList, ScanLine, Package2, Boxes, Calendar, BarChart3, Users,
+  LayoutDashboard, ClipboardList, ScanLine, Package2, Boxes, Calendar, BarChart3, Users, Activity,
 };
 
 function NavItems({ user, expanded, onNavigate }) {

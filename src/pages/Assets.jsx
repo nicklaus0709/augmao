@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, FileDown, FileSpreadsheet, ChevronRight, SearchX, Package2, Search } from "lucide-react";
-import { base44 } from "@/api/base44Client";
+import { fetchAll } from "@/api/data";
 import { useAuth } from "@/lib/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
 import useDebounce from "@/hooks/useDebounce";
@@ -36,7 +36,7 @@ export default function Assets() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const result = await base44.entities.Asset.filter({}, { sort: "code", limit: 500 });
+      const result = await fetchAll("Asset", {}, { sort: "code" });
       setAssets(result.items || []);
     } finally {
       setLoading(false);

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { base44 } from "@/api/base44Client";
+import { callFunction } from "@/api/data";
 import { ASSET_CATEGORY, ASSET_STATUS, options } from "@/lib/constants";
 
 const EMPTY = {
@@ -89,19 +89,17 @@ export default function NewAssetModal({ open, onOpenChange, asset, assets, onSav
         parent_id: form.parent_id || null,
       };
 
-      const existing = await base44.entities.Asset.filter({ code: payload.code }, { limit: 5 });
-      const duplicate = (existing.items || []).find((item) => item.id !== asset?.id);
-      if (duplicate) {
-        setError("Error al crear el activo. Verificá que el codigo no este en uso.");
-        return;
-      }
-
-      if (asset) await base44.entities.Asset.update(asset.id, payload);
-      else await base44.entities.Asset.create(payload);
+      await callFunction(
+        "manageCatalog",
+        asset
+          ? { entity: "Asset", action: "update", id: asset.id, data: payload }
+          : { entity: "Asset", action: "create", data: payload },
+        "No se pudo guardar el activo"
+      );
       onOpenChange(false);
       onSaved();
     } catch (e) {
-      setError("Error al crear el activo. Verificá que el codigo no este en uso.");
+      setError(e.message);
     } finally {
       setSaving(false);
     }

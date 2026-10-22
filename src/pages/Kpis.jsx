@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { FileDown, TrendingUp, Clock, ClipboardList, Wrench, AlertTriangle } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { fetchAll } from "@/api/data";
 import { useAuth } from "@/lib/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
 import PageHeader from "@/components/common/PageHeader";
@@ -39,9 +40,9 @@ export default function Kpis() {
     setLoading(true);
     try {
       const [woResult, partsResult, assetsResult, teamResponse] = await Promise.all([
-        base44.entities.WorkOrder.filter({}, { sort: "-created_date", limit: 500 }),
-        base44.entities.SparePart.filter({}, { sort: "code", limit: 500 }),
-        base44.entities.Asset.filter({}, { sort: "code", limit: 500 }),
+        fetchAll("WorkOrder", {}, { sort: "-created_date" }),
+        fetchAll("SparePart", {}, { sort: "code" }),
+        fetchAll("Asset", {}, { sort: "code" }),
         base44.functions.invoke("manageUsers", { action: "list" }).catch(() => ({ data: { users: [] } })),
       ]);
       setWorkOrders(woResult.items || []);
