@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, FileDown, FileSpreadsheet, CalendarDays, ClipboardList, SearchX } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { fetchAll } from "@/api/data";
 import { useAuth } from "@/lib/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
 import useDebounce from "@/hooks/useDebounce";
@@ -73,7 +74,7 @@ export default function WorkOrders() {
     setLoading(true);
     try {
       const [pageResult, total] = await Promise.all([
-        base44.entities.WorkOrder.filter({}, { sort: "-created_date", limit: 500 }),
+        fetchAll("WorkOrder", {}, { sort: "-created_date" }),
         base44.entities.WorkOrder.count({}),
       ]);
       setWorkOrders(pageResult.items || []);

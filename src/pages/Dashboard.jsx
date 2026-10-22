@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   ClipboardList, CheckCircle, FileDown, CalendarDays, Boxes, AlertTriangle, ChevronRight, Clock, TrendingUp,
 } from "lucide-react";
-import { base44 } from "@/api/base44Client";
+import { fetchAll } from "@/api/data";
 import { useAuth } from "@/lib/AuthContext";
 import PageHeader from "@/components/common/PageHeader";
 import StatCard from "@/components/common/StatCard";
@@ -28,9 +28,9 @@ export default function Dashboard() {
     setLoading(true);
     try {
       const [woResult, partsResult, assetsResult] = await Promise.all([
-        base44.entities.WorkOrder.filter({}, { sort: "-created_date", limit: 500 }),
-        base44.entities.SparePart.filter({}, { sort: "code", limit: 500 }),
-        base44.entities.Asset.filter({}, { sort: "code", limit: 500 }),
+        fetchAll("WorkOrder", {}, { sort: "-created_date" }),
+        fetchAll("SparePart", {}, { sort: "code" }),
+        fetchAll("Asset", {}, { sort: "code" }),
       ]);
       setWorkOrders(woResult.items || []);
       setParts(partsResult.items || []);

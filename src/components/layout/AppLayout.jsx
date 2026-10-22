@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { Link, Outlet } from "react-router-dom";
+import { Link, Outlet, useLocation } from "react-router-dom";
 import { Menu, ScanLine, UserX, LogOut } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import Sidebar from "@/components/layout/Sidebar";
 import Footer from "@/components/layout/Footer";
 import Logo from "@/components/layout/Logo";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 function Deactivated({ onLogout }) {
   return (
@@ -37,6 +38,7 @@ function Deactivated({ onLogout }) {
 
 export default function AppLayout() {
   const { user, logout } = useAuth();
+  const { pathname } = useLocation();
   const [expanded, setExpanded] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [blocked, setBlocked] = useState(false);
@@ -105,7 +107,9 @@ export default function AppLayout() {
 
         <main className="flex-1">
           <div className="mx-auto w-full max-w-[1280px] px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-            <Outlet />
+            <ErrorBoundary resetKey={pathname}>
+              <Outlet />
+            </ErrorBoundary>
           </div>
         </main>
 

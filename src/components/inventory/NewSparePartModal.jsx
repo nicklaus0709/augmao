@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { base44 } from "@/api/base44Client";
+import { callFunction } from "@/api/data";
 import { PART_UNIT } from "@/lib/constants";
 
 const EMPTY = {
@@ -65,19 +65,19 @@ export default function NewSparePartModal({ open, onOpenChange, part, onSaved })
         supplier: form.supplier.trim(),
       };
 
-      const existing = await base44.entities.SparePart.filter({ code: payload.code }, { limit: 5 });
-      const duplicate = (existing.items || []).find((item) => item.id !== part?.id);
-      if (duplicate) {
-        setError("Verificá que el codigo no este en uso.");
-        return;
-      }
-
-      if (part) await base44.entities.SparePart.update(part.id, payload);
-      else await base44.entities.SparePart.create(payload);
+      // El stock de un repuesto existente solo cambia con "Ajustar stock" (queda el movimiento).
+      if (part) delete payload.stock_current;
+      await callFunction(
+        "manageCatalog",
+        part
+          ? { entity: "SparePart", action: "update", id: part.id, data: payload }
+          : { entity: "SparePart", action: "create", data: payload },
+        "No se pudo guardar el repuesto"
+      );
       onOpenChange(false);
       onSaved();
     } catch (e) {
-      setError("No se pudo guardar el repuesto");
+      setError(e.message);
     } finally {
       setSaving(false);
     }

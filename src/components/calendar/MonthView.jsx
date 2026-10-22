@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { AlertTriangle } from "lucide-react";
 import { WO_TYPE, WO_PRIORITY } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import { addDays, isSameDay, isToday, startOfDay, startOfWeek, formatTime, formatLongDate } from "@/lib/format";
+import { addDays, isToday, startOfDay, startOfWeek, formatTime, formatLongDate } from "@/lib/format";
 
 const WEEKDAYS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 

@@ -2,13 +2,17 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, FileText, TrendingUp, TrendingDown, Paperclip, X, SearchX, AlertTriangle } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { callFunction } from "@/api/data";
 import { useAuth } from "@/lib/AuthContext";
+import { useToast } from "@/components/ui/use-toast";
 import PageHeader from "@/components/common/PageHeader";
 import { LoadingBlock } from "@/components/common/EmptyState";
 import { unitLabel } from "@/components/common/Badges";
 import AdjustStockModal from "@/components/inventory/AdjustStockModal";
 import AttachReceiptModal from "@/components/inventory/AttachReceiptModal";
 import PurchaseNoteModal from "@/components/inventory/PurchaseNoteModal";
+import ConfirmDialog from "@/components/common/ConfirmDialog";
+import AuditTrail from "@/components/common/AuditTrail";
 import { can } from "@/lib/permissions";
 import { MOVEMENT_KIND } from "@/lib/constants";
 import { formatDate, formatDateTime, formatMoney } from "@/lib/format";
@@ -27,6 +31,7 @@ function InfoBox({ label, value, tone }) {
 export default function SparePartDetail() {
   const { id } = useParams();
   const { user } = useAuth();
+  const { toast } = useToast();
 
   const [part, setPart] = useState(null);
   const [movements, setMovements] = useState([]);
@@ -37,6 +42,7 @@ export default function SparePartDetail() {
   const [adjustOpen, setAdjustOpen] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
   const [attachFor, setAttachFor] = useState(null);
+  const [pendingReceipt, setPendingReceipt] = useState(null);
 
   const loadAll = useCallback(async () => {
     setLoading(true);
@@ -83,9 +89,12 @@ export default function SparePartDetail() {
   };
 
   const removeReceipt = async (receipt) => {
-    if (!window.confirm(`¿Eliminar ${receipt.file_name}?`)) return;
-    await base44.entities.StockMovementAttachment.delete(receipt.id);
-    await loadAll();
+    try {
+      await callFunction("attachments", { action: "delete", target: "movement", id: receipt.id }, "No se pudo eliminar el comprobante");
+      await loadAll();
+    } catch (e) {
+      toast({ title: e.message, variant: "destructive" });
+    }
   };
 
   if (missing) {
@@ -216,7 +225,7 @@ export default function SparePartDetail() {
                                   {can.deleteAttachments(user) && (
                                     <button
                                       type="button"
-                                      onClick={() => removeReceipt(receipt)}
+                                      onClick={() => setPendingReceipt(receipt)}
                                       aria-label={`Eliminar ${receipt.file_name}`}
                                       className="btn-icon h-5 w-5 text-red-500"
                                     >
@@ -261,15 +270,28 @@ export default function SparePartDetail() {
                       {movement.type === "ENTRY" ? "+" : movement.type === "EXIT" ? "-" : "±"}
                       {movement.quantity} → {movement.stock_after}
                     </p>
-                    <p className="text-xs text-mutedText">{movement.reason || "Ajuste"} · {formatDateTime(movement.created_date)}</p>
+                    <p className="text-xs text-mutedText">{movement.reason || "Ajuste"}
+                      {movement.user_name ? ` · ${movement.user_name}` : ""} · {formatDateTime(movement.created_date)}</p>
                   </li>
                 ))}
               </ul>
             )}
           </section>
+
+          {can.viewHistory(user) && <AuditTrail entity="SparePart" entityId={part.id} />}
         </div>
       </div>
 
+      <ConfirmDialog
+        open={Boolean(pendingReceipt)}
+        onOpenChange={(open) => !open && setPendingReceipt(null)}
+        title={`¿Eliminar ${pendingReceipt?.file_name || "el comprobante"}?`}
+        onConfirm={() => {
+          const receipt = pendingReceipt;
+          setPendingReceipt(null);
+          removeReceipt(receipt);
+        }}
+      />
       <AdjustStockModal
         open={adjustOpen}
         onOpenChange={setAdjustOpen}

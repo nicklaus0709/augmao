@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, FileDown, QrCode, History, Pencil, SearchX, ClipboardList } from "lucide-react";
+import { ArrowLeft, FileDown, QrCode, History, Pencil, SearchX } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { fetchAll } from "@/api/data";
 import { useAuth } from "@/lib/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
 import PageHeader from "@/components/common/PageHeader";
@@ -9,10 +10,11 @@ import { LoadingBlock } from "@/components/common/EmptyState";
 import { AssetStatusBadge, StatusBadge, TypeBadge, categoryLabel } from "@/components/common/Badges";
 import AttachmentPanel from "@/components/common/AttachmentPanel";
 import NewAssetModal from "@/components/assets/NewAssetModal";
+import AuditTrail from "@/components/common/AuditTrail";
 import { exportAssetPdf, exportQrLabelPdf } from "@/lib/exports/pdf";
 import { can } from "@/lib/permissions";
 import { frequencyText } from "@/lib/constants";
-import { formatDate, formatDateTime, formatMinutes } from "@/lib/format";
+import { formatDate, formatMinutes } from "@/lib/format";
 
 function InfoRow({ label, value }) {
   return (
@@ -50,9 +52,9 @@ export default function AssetDetail() {
       setAsset(record);
 
       const [allAssets, plansResult, ordersResult] = await Promise.all([
-        base44.entities.Asset.filter({}, { sort: "code", limit: 500 }),
+        fetchAll("Asset", {}, { sort: "code" }),
         base44.entities.MaintenancePlan.filter({}, { limit: 200 }),
-        base44.entities.WorkOrder.filter({ asset_id: record.id }, { sort: "-created_date", limit: 200 }),
+        fetchAll("WorkOrder", { asset_id: record.id }, { sort: "-created_date" }),
       ]);
 
       const list = allAssets.items || [];
@@ -259,6 +261,8 @@ export default function AssetDetail() {
             canUpload={can.uploadAttachments(user)}
             canDelete={can.deleteAttachments(user)}
           />
+
+          {can.viewHistory(user) && <AuditTrail entity="Asset" entityId={asset.id} />}
         </div>
       </div>
 

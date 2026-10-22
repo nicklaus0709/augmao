@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Loader2, Receipt, Truck, X } from "lucide-react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { base44 } from "@/api/base44Client";
+import { callFunction } from "@/api/data";
 import { MAX_FILE_SIZE, RECEIPT_TYPES } from "@/lib/constants";
 
 function FilePicker({ label, icon: Icon, file, onPick, onClear }) {
@@ -76,17 +77,13 @@ export default function AdjustStockModal({ open, onOpenChange, part, onSaved }) 
       setError("Ingresá una cantidad distinta de 0");
       return;
     }
+    if (!reason.trim()) {
+      setError("Indicá el motivo del ajuste");
+      return;
+    }
     setSaving(true);
     try {
-      const response = await base44.functions.invoke("adjustStock", {
-        spare_part_id: part.id,
-        quantity: qty,
-        reason,
-      });
-      if (response.data?.error) {
-        setError(response.data.error);
-        return;
-      }
+      const data = await callFunction("adjustStock", { spare_part_id: part.id, quantity: qty, reason }, "No se pudo ajustar el stock");
 
       const failed = [];
       const uploads = [];
@@ -96,8 +93,10 @@ export default function AdjustStockModal({ open, onOpenChange, part, onSaved }) 
       for (const item of uploads) {
         try {
           const { file_uri } = await base44.integrations.Core.UploadPrivateFile({ file: item.file });
-          await base44.entities.StockMovementAttachment.create({
-            movement_id: response.data.movement_id,
+          await callFunction("attachments", {
+            action: "create",
+            target: "movement",
+            record_id: data.movement_id,
             kind: item.kind,
             file_name: item.file.name,
             file_uri,
@@ -112,7 +111,7 @@ export default function AdjustStockModal({ open, onOpenChange, part, onSaved }) 
       onOpenChange(false);
       onSaved({ failed });
     } catch (e) {
-      setError(e.response?.data?.error || "No se pudo ajustar el stock");
+      setError(e.message || "No se pudo ajustar el stock");
     } finally {
       setSaving(false);
     }

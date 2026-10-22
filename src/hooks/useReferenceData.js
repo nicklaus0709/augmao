@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
+import { fetchAll } from "@/api/data";
 
 // Activos, repuestos y equipo: datos que usan casi todas las pantallas.
 export default function useReferenceData() {
@@ -7,8 +8,8 @@ export default function useReferenceData() {
 
   const load = useCallback(async () => {
     const [assetsPage, partsPage, teamResponse] = await Promise.all([
-      base44.entities.Asset.filter({}, { sort: "code", limit: 500 }),
-      base44.entities.SparePart.filter({}, { sort: "code", limit: 500 }),
+      fetchAll("Asset", {}, { sort: "code" }),
+      fetchAll("SparePart", {}, { sort: "code" }),
       base44.functions.invoke("manageUsers", { action: "list" }).catch(() => ({ data: { users: [] } })),
     ]);
     setState({

@@ -1,9 +1,14 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Paperclip, Upload, Trash2, Image as ImageIcon, FileText } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { callFunction } from "@/api/data";
 import { formatDateTime, formatBytes } from "@/lib/format";
 import { ALLOWED_ATTACHMENT_TYPES, MAX_FILE_SIZE } from "@/lib/constants";
 import EmptyState, { Spinner } from "@/components/common/EmptyState";
+import ConfirmDialog from "@/components/common/ConfirmDialog";
+
+// Entidad de adjuntos -> destino que valida la función "attachments".
+const TARGET_BY_ENTITY = { WorkOrderAttachment: "work_order", AssetAttachment: "asset" };
 
 // Panel de adjuntos: archivos privados de Base44, abiertos con URL firmada temporal.
 export default function AttachmentPanel({ entity, field, recordId, canUpload, canDelete, onCountChange }) {
@@ -11,6 +16,8 @@ export default function AttachmentPanel({ entity, field, recordId, canUpload, ca
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
+  const [pendingDelete, setPendingDelete] = useState(null);
+  const target = TARGET_BY_ENTITY[entity];
 
   const load = useCallback(async () => {
     if (!recordId) return;
@@ -45,16 +52,22 @@ export default function AttachmentPanel({ entity, field, recordId, canUpload, ca
     setUploading(true);
     try {
       const { file_uri } = await base44.integrations.Core.UploadPrivateFile({ file });
-      await base44.entities[entity].create({
-        [field]: recordId,
-        file_name: file.name,
-        file_uri,
-        file_type: file.type,
-        size_bytes: file.size,
-      });
+      await callFunction(
+        "attachments",
+        {
+          action: "create",
+          target,
+          record_id: recordId,
+          file_name: file.name,
+          file_uri,
+          file_type: file.type,
+          size_bytes: file.size,
+        },
+        "No se pudo subir el archivo"
+      );
       await load();
     } catch (e) {
-      setError("No se pudo subir el archivo");
+      setError(e.message || "No se pudo subir el archivo");
     } finally {
       setUploading(false);
     }
@@ -70,9 +83,13 @@ export default function AttachmentPanel({ entity, field, recordId, canUpload, ca
   };
 
   const remove = async (record) => {
-    if (!window.confirm(`¿Eliminar ${record.file_name}?`)) return;
-    await base44.entities[entity].delete(record.id);
-    await load();
+    setError("");
+    try {
+      await callFunction("attachments", { action: "delete", target, id: record.id }, "No se pudo eliminar el archivo");
+      await load();
+    } catch (e) {
+      setError(e.message);
+    }
   };
 
   return (
@@ -121,7 +138,7 @@ export default function AttachmentPanel({ entity, field, recordId, canUpload, ca
               {canDelete && (
                 <button
                   type="button"
-                  onClick={() => remove(record)}
+                  onClick={() => setPendingDelete(record)}
                   aria-label={`Eliminar ${record.file_name}`}
                   className="btn-icon text-red-500 hover:bg-red-50"
                 >
@@ -132,6 +149,18 @@ export default function AttachmentPanel({ entity, field, recordId, canUpload, ca
           ))}
         </ul>
       )}
+
+      <ConfirmDialog
+        open={Boolean(pendingDelete)}
+        onOpenChange={(open) => !open && setPendingDelete(null)}
+        title={`¿Eliminar ${pendingDelete?.file_name || "el archivo"}?`}
+        description="El archivo deja de estar disponible para todo el equipo."
+        onConfirm={() => {
+          const record = pendingDelete;
+          setPendingDelete(null);
+          remove(record);
+        }}
+      />
     </div>
   );
 }

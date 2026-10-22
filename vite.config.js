@@ -2,6 +2,9 @@ import base44 from "@base44/vite-plugin"
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
+// Versión visible en los reportes de errores del navegador (página "Salud del sistema").
+process.env.VITE_APP_RELEASE ??= new Date().toISOString().slice(0, 16).replace('T', ' ')
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [

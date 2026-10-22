@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { addDays, isToday, startOfDay, startOfWeek, formatTime, formatLongDate } from "@/lib/format";
+import { addDays, isToday, startOfDay, startOfWeek, formatTime } from "@/lib/format";
 
 const HOUR_HEIGHT = 48;
 const MIN_DURATION = 30;

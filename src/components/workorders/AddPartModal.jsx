@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Loader2, Plus } from "lucide-react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { base44 } from "@/api/base44Client";
+import { callFunction } from "@/api/data";
 import { unitLabel } from "@/components/common/Badges";
 
-export default function AddPartModal({ open, onOpenChange, workOrder, parts, usedParts, onSaved }) {
+export default function AddPartModal({ open, onOpenChange, workOrder, parts, onSaved }) {
   const [sparePartId, setSparePartId] = useState("");
   const [quantity, setQuantity] = useState("1");
   const [saving, setSaving] = useState(false);
@@ -35,24 +35,15 @@ export default function AddPartModal({ open, onOpenChange, workOrder, parts, use
 
     setSaving(true);
     try {
-      const existing = usedParts.find((p) => p.spare_part_id === sparePartId);
-      if (existing) {
-        await base44.entities.WorkOrderPart.update(existing.id, {
-          quantity_used: qty,
-          unit_cost: spare.unit_cost ?? null,
-        });
-      } else {
-        await base44.entities.WorkOrderPart.create({
-          work_order_id: workOrder.id,
-          spare_part_id: sparePartId,
-          quantity_used: qty,
-          unit_cost: spare.unit_cost ?? null,
-        });
-      }
+      await callFunction(
+        "workOrderParts",
+        { action: "upsert", work_order_id: workOrder.id, spare_part_id: sparePartId, quantity: qty },
+        "No se pudo cargar el repuesto"
+      );
       onOpenChange(false);
       onSaved();
     } catch (e) {
-      setError("No se pudo cargar el repuesto");
+      setError(e.message);
     } finally {
       setSaving(false);
     }

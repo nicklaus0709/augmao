@@ -7,26 +7,31 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import RequireRole from '@/components/RequireRole';
+import { Suspense, lazy } from 'react';
+import { LoadingBlock } from '@/components/common/EmptyState';
 import AppLayout from '@/components/layout/AppLayout';
 // Add page imports here
 import Login from './pages/Login';
-import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
-import Dashboard from './pages/Dashboard';
-import WorkOrders from './pages/WorkOrders';
-import WorkOrderDetail from './pages/WorkOrderDetail';
-import WorkOrderCalendar from './pages/WorkOrderCalendar';
-import Scan from './pages/Scan';
-import ScanAsset from './pages/ScanAsset';
-import PublicAssetRedirect from './pages/PublicAssetRedirect';
-import Assets from './pages/Assets';
-import AssetDetail from './pages/AssetDetail';
-import Inventory from './pages/Inventory';
-import SparePartDetail from './pages/SparePartDetail';
-import Maintenance from './pages/Maintenance';
-import Kpis from './pages/Kpis';
-import Users from './pages/Users';
+
+// Pantallas internas: se cargan bajo demanda para achicar el bundle inicial.
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const WorkOrders = lazy(() => import('./pages/WorkOrders'));
+const WorkOrderDetail = lazy(() => import('./pages/WorkOrderDetail'));
+const WorkOrderCalendar = lazy(() => import('./pages/WorkOrderCalendar'));
+const Scan = lazy(() => import('./pages/Scan'));
+const ScanAsset = lazy(() => import('./pages/ScanAsset'));
+const PublicAssetRedirect = lazy(() => import('./pages/PublicAssetRedirect'));
+const Assets = lazy(() => import('./pages/Assets'));
+const AssetDetail = lazy(() => import('./pages/AssetDetail'));
+const Inventory = lazy(() => import('./pages/Inventory'));
+const SparePartDetail = lazy(() => import('./pages/SparePartDetail'));
+const Maintenance = lazy(() => import('./pages/Maintenance'));
+const Kpis = lazy(() => import('./pages/Kpis'));
+const Users = lazy(() => import('./pages/Users'));
+const SystemHealth = lazy(() => import('./pages/SystemHealth'));
 
 const RequireLogin = () => (
   <Navigate to={`/login?returnTo=${encodeURIComponent(window.location.pathname + window.location.search)}`} replace />
@@ -60,26 +65,34 @@ const AuthenticatedApp = () => {
     <Routes>
       {/* Add your page Route elements here */}
       <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
 
       <Route element={<ProtectedRoute unauthenticatedElement={<RequireLogin />} />}>
         <Route element={<AppLayout />}>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/work-orders" element={<WorkOrders />} />
-          <Route path="/work-orders/calendar" element={<WorkOrderCalendar />} />
-          <Route path="/work-orders/:id" element={<WorkOrderDetail />} />
-          <Route path="/scan" element={<Scan />} />
-          <Route path="/scan/asset/:id" element={<ScanAsset />} />
-          <Route path="/public/asset/:id" element={<PublicAssetRedirect />} />
-          <Route path="/assets" element={<Assets />} />
-          <Route path="/assets/:id" element={<AssetDetail />} />
-          <Route path="/inventory" element={<Inventory />} />
-          <Route path="/inventory/:id" element={<SparePartDetail />} />
-          <Route path="/maintenance" element={<Maintenance />} />
-          <Route path="/kpis" element={<Kpis />} />
-          <Route path="/users" element={<Users />} />
+          <Route
+            element={
+              <Suspense fallback={<LoadingBlock />}>
+                <RequireRole />
+              </Suspense>
+            }
+          >
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/work-orders" element={<WorkOrders />} />
+            <Route path="/work-orders/calendar" element={<WorkOrderCalendar />} />
+            <Route path="/work-orders/:id" element={<WorkOrderDetail />} />
+            <Route path="/scan" element={<Scan />} />
+            <Route path="/scan/asset/:id" element={<ScanAsset />} />
+            <Route path="/public/asset/:id" element={<PublicAssetRedirect />} />
+            <Route path="/assets" element={<Assets />} />
+            <Route path="/assets/:id" element={<AssetDetail />} />
+            <Route path="/inventory" element={<Inventory />} />
+            <Route path="/inventory/:id" element={<SparePartDetail />} />
+            <Route path="/maintenance" element={<Maintenance />} />
+            <Route path="/kpis" element={<Kpis />} />
+            <Route path="/users" element={<Users />} />
+            <Route path="/health" element={<SystemHealth />} />
+          </Route>
         </Route>
       </Route>
 

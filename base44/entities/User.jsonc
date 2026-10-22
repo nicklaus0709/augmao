@@ -10,14 +10,20 @@
         "TECHNICIAN",
         "VIEWER"
       ],
-      "default": "TECHNICIAN"
+      "default": "VIEWER",
+      "rls": {
+        "write": false
+      }
     },
     "phone": {
       "type": "string"
     },
     "active": {
       "type": "boolean",
-      "default": true
+      "default": true,
+      "rls": {
+        "write": false
+      }
     }
   }
 }

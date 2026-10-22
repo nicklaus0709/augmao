@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Loader2, Plus, X } from "lucide-react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { base44 } from "@/api/base44Client";
-import { FREQUENCY, options } from "@/lib/constants";
+import { callFunction } from "@/api/data";
+import { FREQUENCY } from "@/lib/constants";
 import { activeTechnicians } from "@/lib/permissions";
-import { addFrequency, todayISODate } from "@/lib/format";
+import { todayISODate } from "@/lib/format";
 
 export default function NewPlanModal({ open, onOpenChange, assets, users, onSaved }) {
   const [form, setForm] = useState({
@@ -61,23 +61,29 @@ export default function NewPlanModal({ open, onOpenChange, assets, users, onSave
     }
     setSaving(true);
     try {
-      const start = form.start_date || todayISODate();
-      await base44.entities.MaintenancePlan.create({
-        name: form.name.trim(),
-        description: form.description.trim(),
-        asset_id: form.asset_id,
-        frequency_type: form.frequency_type,
-        frequency_value: Number(form.frequency_value) || 1,
-        estimated_minutes: form.estimated_minutes ? Number(form.estimated_minutes) : null,
-        task_checklist: checklist,
-        assigned_to_id: form.assigned_to_id || null,
-        active: true,
-        next_run_at: addFrequency(start, form.frequency_type, Number(form.frequency_value) || 1),
-      });
+      await callFunction(
+        "manageCatalog",
+        {
+          entity: "MaintenancePlan",
+          action: "create",
+          data: {
+            name: form.name.trim(),
+            description: form.description.trim(),
+            asset_id: form.asset_id,
+            frequency_type: form.frequency_type,
+            frequency_value: Number(form.frequency_value) || 1,
+            estimated_minutes: form.estimated_minutes ? Number(form.estimated_minutes) : null,
+            task_checklist: checklist,
+            assigned_to_id: form.assigned_to_id || null,
+            start_date: form.start_date || todayISODate(),
+          },
+        },
+        "No se pudo crear el plan"
+      );
       onOpenChange(false);
       onSaved();
     } catch (e) {
-      setError("No se pudo crear el plan");
+      setError(e.message);
     } finally {
       setSaving(false);
     }
