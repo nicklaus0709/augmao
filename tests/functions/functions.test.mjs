@@ -78,6 +78,8 @@ test('crear OT: roles, usuarios desactivados, validación y asignación', async 
   assert.match(state.wo.code, /^OT-\d{4}-0001$/);
   assert.equal(state.wo.created_by_name, 'Sole Jefa');
   assert.equal(state.wo.status, 'ASSIGNED');
+  assert.equal(sentEmails.at(-1).to, 'tomi@planta.test', 'el técnico recibe el aviso de asignación');
+  sentEmails.length = 0;
 
   r = await call('createWorkOrder', USERS.tech, { title: 'Ruido', asset_id });
   state.wo2 = r.data.workOrder;

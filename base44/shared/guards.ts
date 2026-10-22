@@ -434,6 +434,22 @@ export async function notifyRoles(ctx, minRank, subject, body) {
   }
 }
 
+// Avisa al técnico que le asignaron una OT (salvo que se la haya asignado él mismo).
+export async function notifyAssignment(ctx, assignee, workOrder) {
+  if (!assignee || !assignee.email || (ctx.user && assignee.id === ctx.user.id)) return;
+  try {
+    await ctx.base44.asServiceRole.integrations.Core.SendEmail({
+      to: assignee.email,
+      subject: 'AuGmao: te asignaron la ' + workOrder.code,
+      body: 'Te asignaron la orden de trabajo ' + workOrder.code + ' - ' + workOrder.title +
+        ' (prioridad ' + (workOrder.priority || 'MEDIUM') + ').' +
+        (ctx.user ? '\nAsignada por: ' + displayName(ctx.user) : ''),
+    });
+  } catch (e) {
+    logEvent('warn', { fn: ctx.name, request_id: ctx.requestId, msg: 'notification_failed', subject: 'assignment', error: e.message });
+  }
+}
+
 // Avisa a jefes y admins cuando un movimiento deja el repuesto bajo el mínimo.
 export async function checkLowStock(ctx, part, previous, after) {
   const minimum = Number(part && part.stock_minimum);

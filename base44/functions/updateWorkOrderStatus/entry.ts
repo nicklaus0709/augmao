@@ -1,6 +1,6 @@
 import {
   defineFunction, getRecord, assertAssignable, audit, displayName, canOperate, deny,
-  text, id, ROLE_RANK, OPEN_STATUSES,
+  text, id, ROLE_RANK, OPEN_STATUSES, notifyAssignment,
 } from '../../shared/guards.ts';
 
 // Transiciones válidas de la OT (el cierre está en closeWorkOrder).
@@ -34,8 +34,9 @@ export default defineFunction('updateWorkOrderStatus', async (ctx) => {
 
   let patch;
   let summary;
+  let assignee = null;
   if (action === 'assign') {
-    const assignee = await assertAssignable(ctx.base44, ctx.body.assigned_to_id);
+    assignee = await assertAssignable(ctx.base44, ctx.body.assigned_to_id);
     patch = {
       assigned_to_id: assignee.id,
       assigned_to_name: displayName(assignee),
@@ -68,6 +69,8 @@ export default defineFunction('updateWorkOrderStatus', async (ctx) => {
     summary: workOrder.code + ' ' + summary.charAt(0).toLowerCase() + summary.slice(1),
     changes: { status: { from: workOrder.status, to: patch.status } },
   });
+
+  if (assignee && assignee.id !== workOrder.assigned_to_id) await notifyAssignment(ctx, assignee, updated);
 
   return Response.json({ ok: true, status: patch.status, workOrder: updated });
 });

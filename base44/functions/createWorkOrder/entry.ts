@@ -1,6 +1,6 @@
 import {
   defineFunction, getRecord, reserveWorkOrderCode, assertAssignable, audit, displayName,
-  text, number, dateTime, oneOf, id, ROLE_RANK, rankOf, deny,
+  text, number, dateTime, oneOf, id, ROLE_RANK, rankOf, deny, notifyAssignment,
 } from '../../shared/guards.ts';
 
 const TYPES = ['CORRECTIVE', 'PREVENTIVE', 'PREDICTIVE', 'INSPECTION'];
@@ -55,6 +55,8 @@ export default defineFunction('createWorkOrder', async (ctx) => {
     entityId: workOrder.id,
     summary: workOrder.code + ' creada sobre ' + asset.code + (assignee ? ', asignada a ' + displayName(assignee) : ''),
   });
+
+  await notifyAssignment(ctx, assignee, workOrder);
 
   return Response.json({ workOrder });
 });
