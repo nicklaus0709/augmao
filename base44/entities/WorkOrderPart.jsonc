@@ -1,0 +1,81 @@
+{
+  "name": "WorkOrderPart",
+  "type": "object",
+  "properties": {
+    "work_order_id": {
+      "type": "string"
+    },
+    "spare_part_id": {
+      "type": "string"
+    },
+    "quantity_used": {
+      "type": "number"
+    },
+    "unit_cost": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "work_order_id",
+    "spare_part_id",
+    "quantity_used"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

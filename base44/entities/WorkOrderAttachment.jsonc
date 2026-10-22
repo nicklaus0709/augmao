@@ -1,0 +1,84 @@
+{
+  "name": "WorkOrderAttachment",
+  "type": "object",
+  "properties": {
+    "work_order_id": {
+      "type": "string"
+    },
+    "file_name": {
+      "type": "string"
+    },
+    "file_uri": {
+      "type": "string"
+    },
+    "file_type": {
+      "type": "string"
+    },
+    "size_bytes": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "work_order_id",
+    "file_name",
+    "file_uri"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

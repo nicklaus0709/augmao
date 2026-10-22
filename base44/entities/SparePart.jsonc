@@ -1,0 +1,107 @@
+{
+  "name": "SparePart",
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "unit": {
+      "type": "string",
+      "enum": [
+        "unit",
+        "liter",
+        "kg",
+        "meter",
+        "kit"
+      ],
+      "default": "unit"
+    },
+    "stock_current": {
+      "type": "number"
+    },
+    "stock_minimum": {
+      "type": "number",
+      "default": 1
+    },
+    "stock_maximum": {
+      "type": "number"
+    },
+    "unit_cost": {
+      "type": "number"
+    },
+    "location": {
+      "type": "string"
+    },
+    "supplier": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "code",
+    "name"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

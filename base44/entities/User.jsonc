@@ -1,0 +1,23 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "app_role": {
+      "type": "string",
+      "enum": [
+        "ADMIN",
+        "SUPERVISOR",
+        "TECHNICIAN",
+        "VIEWER"
+      ],
+      "default": "TECHNICIAN"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true
+    }
+  }
+}

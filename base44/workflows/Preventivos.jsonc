@@ -1,0 +1,47 @@
+{
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "preventivos_diarios",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "generar_preventivos": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "runMaintenancePlan",
+            "args": {
+              "mode": "due"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Generar \u00f3rdenes preventivas",
+            "description": "Planes vencidos del d\u00eda"
+          }
+        }
+      }
+    ]
+  },
+  "name": "Preventivos diarios",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 6 * * *",
+      "one_time_date": null,
+      "timezone": "America/Argentina/Buenos_Aires",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "description": "Genera las \u00f3rdenes de trabajo de los planes preventivos vencidos, todos los d\u00edas a las 06:00 (hora de Argentina)"
+}
